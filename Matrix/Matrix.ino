@@ -10,6 +10,7 @@
 
 AdafruitIO_Feed *matrix = io.feed("matrix");
 CRGB leds[NUM_LEDS];
+
 void setup() {
   FastLED.addLeds<WS2811, PIN>(leds, NUM_LEDS);
   delay(1000);
@@ -33,17 +34,47 @@ void setup() {
   Serial.println();
   Serial.println(io.statusText());
 
-  matrix->onMessage(loadFile);
+  matrix->onMessage(handleMessage);
   matrix->get();
+  readConfig("http://192.168.1.15/mario/star-blink.csv");
   //loadFile("http://192.168.1.15/mario/mario-stand.bmp");
+}
+
+void handleMessage(AdafruitIO_Data *data) {
+  loadFile(data->value());
 }
 
 void loop() {
   io.run();
 }
 
-void loadFile(AdafruitIO_Data *data) {
-  String url = data->value();
+void readConfig(String url) {
+  HTTPClient http;
+  http.begin(url);
+  int httpCode = http.GET();
+  String fileBody = http.getString();
+  http.end();
+  
+  char configuration[fileBody.length()];
+  fileBody.toCharArray(configuration, fileBody.length());
+  //Serial.println(configuration);
+  char* line = strtok(configuration, "\n\r");
+  while (line != 0) {
+    char* separator = strchr(line, ';');
+    if (separator != 0) {
+      *separator = 0;
+      int ms = atoi(line);
+      ++separator;
+      char* frameUrl = separator;
+      Serial.print(ms);
+      Serial.print("ms:\t");
+      Serial.println(frameUrl);
+    }
+    line = strtok(0, "\n\r");
+  }
+}
+
+void loadFile(String url) {
   Serial.print("Got URL: ");
   Serial.println(url);
   HTTPClient http;
@@ -56,9 +87,10 @@ void loadFile(AdafruitIO_Data *data) {
   while(http.connected() && (len > 0 || len == -1)) {
     int c = stream->readBytes(buff, len);
   }
+  http.end();
   //printHexData(buff, len);
   int32_t offset = readNbytesInt(buff, 10, 4);
-  Serial.println(offset);
+  //Serial.println(offset);
   showPicture(buff, offset);
 }
 
