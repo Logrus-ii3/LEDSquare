@@ -36,7 +36,7 @@ void setup() {
 
   matrix->onMessage(handleMessage);
   matrix->get();
-  readConfig("http://192.168.1.15/mario/star-blink.csv");
+  //readConfig("http://192.168.1.15/mario/star-blink.csv");
   //loadFile("http://192.168.1.15/mario/mario-stand.bmp");
 }
 
