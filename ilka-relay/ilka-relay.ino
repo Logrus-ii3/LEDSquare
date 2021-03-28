@@ -2,7 +2,7 @@
 #include <ESP8266WiFi.h>
 
 int port = 8888;  //Port number
-const int relayPin = D1;
+const int relayPin = D2;
 
 WiFiServer server(port);
 WiFiClient client;
@@ -30,7 +30,8 @@ void setup() {
   Serial.begin(115200);
   setup_wifi();
   pinMode(relayPin, OUTPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
+  delay(50);
+  digitalWrite(relayPin, HIGH);
   server.begin();
 }
 
@@ -43,13 +44,10 @@ void loop() {
       char msgChar = client.read();
       if (msgChar == '0') {
         digitalWrite(relayPin, HIGH);
-        digitalWrite(LED_BUILTIN, HIGH);
-        client.stop();
       } else if (msgChar == '1') {
         digitalWrite(relayPin, LOW);
-        digitalWrite(LED_BUILTIN, LOW);
-        client.stop();
       }
+      client.stop();
     }
   }
 }
