@@ -1,53 +1,40 @@
-#include "config.h"
-#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h> // Подключение WiFi-библиотеки
+#define WIFI_SSID "MY WIFI"
+#define WIFI_PASS "SECRET"
 
-int port = 8888;  //Port number
-const int relayPin = D2;
+int port = 8888;  // Номер TCP-порта для ожидания клиента
+const int relayPin = D2; // Пин, к которому подключено реле
 
-WiFiServer server(port);
-WiFiClient client;
+WiFiServer server(port); // Инициализация сервера
+WiFiClient client; // Объявление переменной для клиента
 
-void setup_wifi() {
-  delay(10);
-  Serial.print("Connecting to ");
-  Serial.println(WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  while (WiFi.status() != WL_CONNECTED) {
+void setup() { // Выполнется один раз при включении
+  Serial.begin(115200); // Подключиться к консоли
+  WiFi.mode(WIFI_STA); // Режим Station для WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASS); // Инициировать подключение к WiFi
+  while (WiFi.status() != WL_CONNECTED) { // Ожидаем подключения
     Serial.print(".");
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(250);
-    digitalWrite(LED_BUILTIN, HIGH);
     delay(250);
   }
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  Serial.print("WiFi connected. IP address: ");
+  Serial.println(WiFi.localIP()); // Вывести в консоль полученный IP-адрес
+  pinMode(relayPin, OUTPUT); // Установка режима "чтения" для пина реле
+  digitalWrite(relayPin, LOW); // "Включить" реле
+  server.begin(); // Запустить сервер, ожидать подключений
 }
 
-void setup() {
-  delay(50);
-  Serial.begin(115200);
-  setup_wifi();
-  pinMode(relayPin, OUTPUT);
-  delay(50);
-  digitalWrite(relayPin, HIGH);
-  server.begin();
-}
-
-void loop() {
-  if (!client.connected()) {
-    client = server.available();
-  } else {
-    if (client.available() > 0) {
-      // read data from the connected client
-      char msgChar = client.read();
+void loop() { // Бесконечный цикл, пока работает устройство
+  if (!client.connected()) { // Если клиент не подключён
+    client = server.available(); // Проверить подключение клиента
+  } else { // Если клиент подключён
+    if (client.available() > 0) { // Если от клиента пришли данные
+      char msgChar = client.read(); // Прочитать один байт от клиента
       if (msgChar == '0') {
-        digitalWrite(relayPin, HIGH);
+        digitalWrite(relayPin, HIGH); // "Выключить" реле
       } else if (msgChar == '1') {
-        digitalWrite(relayPin, LOW);
+        digitalWrite(relayPin, LOW); // "Включить" реле
       }
-      client.stop();
+      client.stop(); // Отключить клиента
     }
   }
 }
