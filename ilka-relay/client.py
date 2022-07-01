@@ -1,4 +1,5 @@
 import socket
+print("Hello! Input your value.")
 send = input("input: ")
 
 sock = socket.socket()
